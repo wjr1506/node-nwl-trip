@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { getEmailClient } from "../../lib/mail";
 import { dayjs } from '../../lib/dayjs';
+import { ClientError } from '../../errors/client-erros';
 
 export async function getActivity(app: FastifyInstance) {
     app.withTypeProvider<ZodTypeProvider>().get('/trips/:tripId/activites', {
@@ -23,7 +24,7 @@ export async function getActivity(app: FastifyInstance) {
         });
 
         if (!trip) {
-            throw new Error('Trip not found');
+            throw new ClientError('Trip not found');
         }
 
         const numberOfTravelDays = dayjs(trip.ends_at).diff(trip.starts_at, 'day')
@@ -36,8 +37,7 @@ export async function getActivity(app: FastifyInstance) {
                 })
             }
         })
-
-
+        
         return { activies }
     });
 }

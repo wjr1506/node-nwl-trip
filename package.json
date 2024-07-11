@@ -6,6 +6,7 @@
   "scripts": {
     "start": "",
     "dev": "npx tsx watch src/index.ts",
+    "env-dev": "npx tsx watch --env-file .env src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migration": "npx prisma migrate dev"
   },

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { getEmailClient } from "../../lib/mail";
 import { dayjs } from '../../lib/dayjs';
+import { ClientError } from '../../errors/client-erros';
 
 export async function createActivity(app: FastifyInstance) {
     app.withTypeProvider<ZodTypeProvider>().post('/trips/:tripId/activites', {
@@ -28,15 +29,15 @@ export async function createActivity(app: FastifyInstance) {
         });
 
         if (!trip) {
-            throw new Error('Trip not found');
+            throw new ClientError('Trip not found');
         }
 
         if (dayjs(occurs_at).isBefore(trip.starts_at)) {
-            throw new Error('Ivalid date')
+            throw new ClientError('Ivalid date')
         }
 
         if (dayjs(occurs_at).isAfter(trip.ends_at)) {
-            throw new Error('Ivalid date')
+            throw new ClientError('Ivalid date')
         }
 
         const activity = await prisma.activity.create({

@@ -5,32 +5,34 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { prisma } from '../../lib/prisma';
 import { getEmailClient } from '../../lib/mail';
 import { dayjs } from "../../lib/dayjs";
+import { ClientError } from '../../errors/client-erros';
+import { env } from '../../env';
 
 export async function confirmTrip(app: FastifyInstance) {
-    app.withTypeProvider<ZodTypeProvider>().get('/trips/:id/confirm', {
+    app.withTypeProvider<ZodTypeProvider>().get('/trips/:tripId/confirm', {
         schema:
         {
             params: z.object({
-                id: z.string().uuid(),
+                tripId: z.string().uuid(),
             })
         }
     }, async (req, res) => {
-        const id = req.params.id;
+        const { tripId } = req.params;
 
         const trip = await prisma.trip.findUnique({
             where: {
-                id: id
+                id: tripId
             }, include: {
                 participants: { where: { is_owner: false } }
             }
         })
 
         if (!trip) {
-            throw new Error('Trip not found')
+            throw new ClientError('Trip not found')
         }
 
         if (trip.is_confirmed) {
-            return res.redirect('http://localhost:8000')
+            return res.redirect(`${env.WEB_BASE_URL}/trips/${tripId}`)
         }
 
         await prisma.trip.update(
@@ -53,7 +55,7 @@ export async function confirmTrip(app: FastifyInstance) {
                     <p>${trip.destination}</p>
                     <p>inicio ${dayjs(trip.starts_at).format('LL')}</p>
                     <p>final ${dayjs(trip.ends_at).format('LL')}</p>
-                    <p><a href="http://localhost:8000/participants/${participant.id}/confirm/">Confirmar vaga</p>
+                    <p><a href="${env.API_BASE_URL}/participants/${participant.id}/confirm/">Confirmar vaga</p>
                     </div>
                     `.trim()
                 });
@@ -62,6 +64,6 @@ export async function confirmTrip(app: FastifyInstance) {
             })
         );
 
-        return res.redirect('http://localhost:8000')
+        return res.redirect(`${env.WEB_BASE_URL}/trips/${tripId}`)
     });
 }

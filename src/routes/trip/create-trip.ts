@@ -5,9 +5,11 @@ import { z } from 'zod';
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { getEmailClient } from "../../lib/mail";
 import { dayjs } from '../../lib/dayjs';
+import { ClientError } from '../../errors/client-erros';
+import { env } from '../../env';
 
 export async function createTrip(app: FastifyInstance) {
-    app.withTypeProvider<ZodTypeProvider>().post('/create', {
+    app.withTypeProvider<ZodTypeProvider>().post('/trips', {
         schema:
         {
             body: z.object({
@@ -23,11 +25,11 @@ export async function createTrip(app: FastifyInstance) {
         const { destination, starts_at, ends_at, owner_name, owner_email, emails_to_invite } = req.body
 
         if (dayjs(starts_at).isBefore(new Date())) {
-            throw new Error('invalid trip start date')
+            throw new ClientError('invalid trip start date')
         }
 
         if (dayjs(starts_at).isBefore(starts_at)) {
-            throw new Error('invalid trip end date')
+            throw new ClientError('invalid trip end date')
         }
 
         const trip = await prisma.trip.create({
@@ -65,7 +67,7 @@ export async function createTrip(app: FastifyInstance) {
             <p>${destination}</p>
             <p>inicio ${dayjs(starts_at).format('LL')}</p>
             <p>final ${dayjs(ends_at).format('LL')}</p>
-            <p><a href="http://localhost:8000/trips/${trip.id}/confirm">Confirmar Viagem</p>
+            <p><a href="${env.API_BASE_URL}/trips/${trip.id}/confirm">Confirmar Viagem</p>
             </div>
             `.trim()
         });
